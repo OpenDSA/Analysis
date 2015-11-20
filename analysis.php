@@ -142,6 +142,22 @@ include ("../db_connect.php");
 							elseif ($parameter1 == "stest") {
 									$xaxis = "Student Exam Score";
 							}
+							elseif ($parameter1 == "total_attempts") {
+									$xaxis = "Total Attempts";
+							}
+							elseif ($parameter1 == "total_time") {
+									$xaxis = "Total Time";
+							}
+							elseif ($parameter1 == "total_hints") {
+									$xaxis = "Total Hints";
+							}
+							elseif ($parameter1 == "gaming") {
+									$xaxis = "Student Gaming";
+							}
+							elseif ($parameter1 == "incorrect_ratio") {
+									$xaxis = "Incorrect Exercise Question Ratio";
+							}
+
 
 							if ($parameter2 == "attempts_pro") {
 								$yaxis = "Attempts until Proficiency Earned";
@@ -163,6 +179,21 @@ include ("../db_connect.php");
 							}
 							elseif ($parameter2 == "stest") {
 									$yaxis = "Student Exam Score";
+							}
+							elseif ($parameter2 == "total_attempts") {
+									$yaxis = "Total Attempts";
+							}
+							elseif ($parameter2 == "total_time") {
+									$yaxis = "Total Time";
+							}
+							elseif ($parameter2 == "total_hints") {
+									$yaxis = "Total Hints";
+							}
+							elseif ($parameter2 == "gaming") {
+									$yaxis = "Student Gaming";
+							}
+							elseif ($parameter2 == "incorrect_ratio") {
+									$yaxis = "Incorrect Exercise Question Ratio";
 							}
 
 			}
@@ -607,6 +638,8 @@ echo "<table align=center style='width:50%'>";
   echo "</tr>";
 echo "</table>";
 ?>
+
+
 
 
 </div>

@@ -72,6 +72,13 @@
 	<p>
 		Choose your parameters. Select TWO parameters<br/>
 		<!-- <input type="checkbox" name="attempts_pro" value="A" />Attempts until Proficiency Earned<br /> -->
+		<input class="single-checkbox" type="checkbox" name="parameters[]" value="total_attempts" />Total Attempts<br />
+		<input class="single-checkbox" type="checkbox" name="parameters[]" value="total_time" />Total Time<br />
+		<input class="single-checkbox" type="checkbox" name="parameters[]" value="total_hints" />Total Hints<br />
+		<input class="single-checkbox" type="checkbox" name="parameters[]" value="time_ex" />Total Exercise Time<br />
+		<input class="single-checkbox" type="checkbox" name="parameters[]" value="time_hint" />Total Hints Time<br />
+		<input class="single-checkbox" type="checkbox" name="parameters[]" value="incorrect_ratio" />Incorrect Exercise Question Ratio<br />
+		<input class="single-checkbox" type="checkbox" name="parameters[]" value="gaming" />Student Gaming<br />
 		<input class="single-checkbox" type="checkbox" name="parameters[]" value="attempts_pro" />Attempts until Proficiency Earned<br />
 		<input class="single-checkbox" type="checkbox" name="parameters[]" value="time_pro" />Time until Proficiency Earned<br />
 		<input class="single-checkbox" type="checkbox" name="parameters[]" value="hints_pro" />Hints until Proficiency Earned<br />
@@ -86,6 +93,13 @@
 	<input class="single-radio3" id='type-three'type="checkbox" name="option" value="Enable">
 	<span>Yes</span>
 	<div id='show-three' class= 'show-three' style='display:none'>
+		<input type="radio" name="quartile" value="total_attempts" />Total Attempts<br />
+		<input type="radio" name="quartile" value="total_time" />Total Time<br />
+		<input type="radio" name="quartile" value="total_hints" />Total Hints<br />
+		<input type="radio" name="quartile" value="time_ex" />Total Exercise Time<br />
+		<input type="radio" name="quartile" value="time_hint" />Total Hints Time<br />
+		<input type="radio" name="quartile" value="incorrect_ratio" />Incorrect Exercise Question Ratio<br />
+		<input type="radio" name="quartile" value="gaming" />Student Gaming<br />
 		<input type="radio" name="quartile" value="attempts_pro" />Attempts until Proficiency Earned<br />
 		<input type="radio" name="quartile" value="time_pro" />Time until Proficiency Earned<br />
 		<input type="radio" name="quartile" value="hints_pro" />Hints until Proficiency Earned<br />
