@@ -117,7 +117,7 @@ function calculate_baseline($result, $module_id, $book_id){
   }
   print_r($seconds);
   //Fill in csv file
-  $file = fopen("$module_name[$module_id] In Book $book_id Analysis.csv",'w');
+  $file = fopen("Output//$module_name[$module_id] In Book $book_id Analysis.csv",'w');
   //Adding headers
   fputcsv($file, array("User_ID","Difference In Seconds" ,"Module Name","Book_ID"));
   foreach($seconds as $line){
