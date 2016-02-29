@@ -71,11 +71,23 @@ $module_AAVs = array("77"=>"589-590",
 
 $AAVs = explode("-", $module_AAVs["$module_id"]);
 
-//Calculate the time spent in each AAV within the module
-for ($i = 0; $i < count($AAVs); $i++){
-  calculate_time_AAV((int)$AAVs[$i]);
+if($book_id != "VT") {
+  //Calculate the time spent in each AAV within the module (NOT VT)
+  for ($i = 0; $i < count($AAVs); $i++){
+    calculate_time_AAV((int)$AAVs[$i]);
+  }  
+}
+else {
+   
+   //To distinguish VT from other universities
+   //Code for VT (Relying on emails to distiguish users and books)
+   //Calculate the time spent in each AAV within the module (VT Special Case)
+   for ($i = 0; $i < count($AAVs); $i++){
+    calculate_time_AAV_VT((int)$AAVs[$i]);
+   }    
 }
 
+//////////////////////////////////////////////////////////////////////////////////////
 function calculate_time_AAV($AAV_ID){
   global $module_id;
   global $book_id; 
@@ -96,7 +108,7 @@ function calculate_time_AAV($AAV_ID){
                   AND module_id =$module_id
                   AND action_time BETWEEN '$start_date' AND '$end_date'
                   ORDER BY user_id, action_time, id";
-  //}
+  
   $data = array();
   if(@mysql_connect($db_server, $db_username, $db_pass)){
   	  if(@mysql_select_db($db_name)){
@@ -198,8 +210,125 @@ function calculate_baseline($result, $AAV_ID){
 
   echo "Data Written to file Successfuly\n";
 }
-if(isset($argv[5])){
-   $university = $argv[5]; //To distinguish VT from other universities
+////////////////////////////////////////////////////////////////////////////////////////
+function calculate_time_AAV_VT($AAV_ID){
+  global $module_id;
+  global $start_date;
+  global $end_date;
+  global $db_server;
+  global $db_username;
+  global $db_pass;
+  global $db_name;
 
-   //Code for VT (Relying on emails to distiguish users and books)
+
+  $query = "SELECT * 
+                  FROM  `opendsa_userbutton` A INNER JOIN `auth_user` B ON
+                  A.user_id = B.id 
+                  WHERE email IN 
+                 (Select user_email from `CS3114VTRoster`) 
+                  AND module_id = $module_id
+                  AND action_time BETWEEN '$start_date' AND '$end_date'
+                  ORDER BY email, action_time, A.id";
+  
+  $data = array();
+  if(@mysql_connect($db_server, $db_username, $db_pass)){
+      if(@mysql_select_db($db_name)){
+        if($query_run = mysql_query($query)){
+        while($query_result = mysql_fetch_assoc($query_run)){
+        array_push($data, $query_result); 
+        } 
+      }
+    }
+  }
+  
+  $result = array();
+
+  $first_record = null;
+
+  for($i = 0; $i < count($data); $i++){
+    if($data[$i]['exercise_id'] == $AAV_ID && !isset($first_record)) {
+      $first_record = $data[$i];
+      $start_session = true;      
+    }
+    //The first Interaction is captured
+    if(isset($first_record)){
+      if($data[$i]["email"] != $first_record["email"]){
+        
+        //Return back one record and add it
+        array_push($result, $first_record, $data[$i - 1]);
+  
+        //Check if the new user's Interaction is AAV
+        if($data[$i]["exercise_id"] == $AAV_ID){
+          $first_record = $data[$i];
+        }
+        else{
+          $first_record = null;
+        }
+      }
+      else if($data[$i]["email"] == $first_record["email"] && 
+        $data[$i]["exercise_id"] != $first_record["exercise_id"]){
+        //Return back one record
+        array_push($result, $first_record, $data[$i]);
+        $first_record = null;
+      }
+      //If the last intearction is an AAV interction
+      if($i == count($data) - 1){
+        array_push($result, $first_record, $data[$i]);    
+      }
+    }    
+  }
+  //print_r($result);
+
+  calculate_baseline_VT($result, $AAV_ID);
 }
+
+ 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+function calculate_baseline_VT($result, $AAV_ID){
+  //Calculating the baseline data points
+  global $module_name;
+  global $module_id;
+  global $book_id; 
+  global $start_date;
+  global $end_date;
+  global $db_server;
+  global $db_username;
+  global $db_pass;
+  global $db_name;
+
+  $maxDiff = 0;
+  $seconds = array();
+  for($i = 0;$i < count($result); $i += 2){
+    $dateDiff = strtotime($result[$i+1]['action_time']) - strtotime($result[$i]['action_time']);
+    
+    if($dateDiff > $maxDiff && $dateDiff <= 600){
+      $maxDiff = $dateDiff;
+    }
+    
+    if($i < count($result)-2){
+      if($result[$i+2]['email'] != $result[$i]['email']){
+        //Add maxDiff to the list
+        array_push($seconds, array($result[$i]['email'], $AAV_ID, $maxDiff, $module_name[$module_id]));
+        $maxDiff = 0;
+      }
+    }
+    else{
+      //Adding the last one
+      array_push($seconds, array($result[$i]['email'], $AAV_ID, $maxDiff, $module_name[$module_id]));
+     }
+  }
+
+  print_r($seconds);
+  
+  //Fill in csv file
+  $file = fopen("Output//AAV $AAV_ID IN $module_name[$module_id] In VTS16 AAV Analysis.csv",'w');
+  //Adding headers
+  fputcsv($file, array("User_Email", "AAV_ID", "Difference In Seconds" ,"Module Name"));
+  foreach($seconds as $line){
+    fputcsv($file, $line);
+  }
+
+  echo "Data Written to file Successfuly\n";
+}
+////////////////////////////////////////////////////////////////////////////////////////
