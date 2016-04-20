@@ -92,10 +92,16 @@ function calculate_baseline($result, $module_id, $book_id){
   //Calculating the baseline data points
   global $module_name;
   $maxDiff = 0;
+  $number_of_visits = 0;
+
+  $average_time = 0;
+  $average_visits = 0;
+
   $seconds = array();
   for($i = 0;$i < count($result); $i += 2){
     if(match_analysis($result[$i]['description'])){
       $dateDiff = strtotime($result[$i+1]['action_time']) - strtotime($result[$i]['action_time']);
+      $number_of_visits++;
 	  //echo $dateDiff."     ";
 	  if($dateDiff > $maxDiff && $dateDiff <= 600){
 	    $maxDiff = $dateDiff;
@@ -104,27 +110,45 @@ function calculate_baseline($result, $module_id, $book_id){
     if($i < count($result)-2){
       if($result[$i+2]['user_id'] != $result[$i]['user_id']){
         //Add maxDiff to the list
-        array_push($seconds, array($result[$i]['user_id'],$maxDiff, $module_name[$module_id], $book_id));
+        array_push($seconds, array($result[$i]['user_id'],$maxDiff, $number_of_visits, $module_name[$module_id], $book_id));
         $maxDiff = 0;
+        $number_of_visits = 0;
       }
     }
     else{
       //Adding the last one
-      array_push($seconds, array($result[$i]['user_id'],$maxDiff, $module_name[$module_id], $book_id));
+      array_push($seconds, array($result[$i]['user_id'],$maxDiff, $number_of_visits, $module_name[$module_id], $book_id));
     
 	   }
     }
   }
   print_r($seconds);
+
+
+  //Calculate the average time and average number of visits
+    $sum_time = 0;
+    $sum_visits = 0;
+    for ($i = 0; $i < count($seconds); $i++) { 
+      $sum_time += $seconds[$i][1];
+      $sum_visits += $seconds[$i][2];
+    } 
+
+    $average_time = $sum_time / count($seconds);   
+    $average_visits = $sum_visits / count($seconds);   
+
+
   //Fill in csv file
   $file = fopen("Output//$module_name[$module_id] In Book $book_id Analysis.csv",'w');
   //Adding headers
-  fputcsv($file, array("User_ID","Difference In Seconds" ,"Module Name","Book_ID"));
+  fputcsv($file, array("User_ID","Difference in Seconds" , "Number of Visits", "Module Name","Book_ID"));
   foreach($seconds as $line){
     fputcsv($file, $line);
   }
 
-  echo 'Data Written to file Successfuly';
+  //Add Averages
+  fputcsv($file, array("Average", $average_time, $average_visits));
+
+  echo "Data Written to file Successfuly\n";
 }
 
 
