@@ -17,6 +17,9 @@ $module_id = $argv[1];
 $book_id = $argv[2];
 $start_date = $argv[3];
 $end_date = $argv[4];
+$time_out = $argv[5];    //A variable to control when we should time out in case a student leaves
+
+
 $module_name = array();
 //Initialize module names
 for($i=0;$i<100;$i++){
@@ -91,6 +94,8 @@ function distinct_ip_match_analysis($result){
 function calculate_baseline($result, $module_id, $book_id){
   //Calculating the baseline data points
   global $module_name;
+  global $time_out;
+
   $maxDiff = 0;
   $number_of_visits = 0;
 
@@ -103,7 +108,7 @@ function calculate_baseline($result, $module_id, $book_id){
       $dateDiff = strtotime($result[$i+1]['action_time']) - strtotime($result[$i]['action_time']);
       $number_of_visits++;
 	  //echo $dateDiff."     ";
-	  if($dateDiff > $maxDiff && $dateDiff <= 600){
+	  if($dateDiff > $maxDiff && $dateDiff <= $time_out){
 	    $maxDiff = $dateDiff;
 	  }
 	  

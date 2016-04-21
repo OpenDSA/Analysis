@@ -17,6 +17,7 @@ $module_id = $argv[1];
 $book_id = $argv[2];
 $start_date = $argv[3];
 $end_date = $argv[4];
+$time_out = $argv[5];    //A variable to control when we should time out in case a student leaves
 
 $module_name = array();
 
@@ -327,6 +328,7 @@ function calculate_baseline($result, $AAV_ID){
   global $db_pass;
   global $db_name;
   global $total_time;
+  global $time_out;
 
   $maxDiff = 0;
   $number_of_visits = 0;
@@ -334,7 +336,7 @@ function calculate_baseline($result, $AAV_ID){
   for($i = 0;$i < count($result); $i += 2){
     $dateDiff = strtotime($result[$i+1]['action_time']) - strtotime($result[$i]['action_time']);
     $number_of_visits++;
-    if($dateDiff > $maxDiff && $dateDiff <= 600){
+    if($dateDiff > $maxDiff && $dateDiff <= $time_out){
       $maxDiff = $dateDiff;
     }
     
