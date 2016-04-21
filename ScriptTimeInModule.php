@@ -79,7 +79,8 @@ $session_start = false;
 $current_user = null;
 $module_load = null;
 for($i = 0;$i < count($result); $i++){
-  if($result[$i]['name'] == 'document-ready' && $session_start == false){
+  if(($result[$i]['name'] == 'document-ready' || $result[$i]['name'] == 'window-focus')
+   && $session_start == false){
     //Start of a session
     $current_user = $result[$i]["user_id"];
     $module_load = $result[$i];
@@ -92,7 +93,8 @@ for($i = 0;$i < count($result); $i++){
       $module_load = $result[$i];
     }
   }
-  else if ($result[$i]['name'] == 'window-unload' && $session_start == true){
+  else if (($result[$i]['name'] == 'window-unload' || $result[$i]['name'] == 'window-blur') 
+    && $session_start == true){
     //window-unload matching a document ready
     if($result[$i]['user_id'] == $current_user){
       array_push($sessions, $module_load);  
