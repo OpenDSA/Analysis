@@ -1,8 +1,4 @@
 <?php
-/**
- * Export to PHP Array plugin for PHPMyAdmin
- * @version 0.2b
- */
 
 //
 // Database `odsa_S14`
@@ -17,6 +13,10 @@ $module_id = $argv[1];
 $book_id = $argv[2];
 $start_date = $argv[3];
 $end_date = $argv[4];
+$time_out = $argv[5];    //A variable to control when we should time out in case a student leaves
+
+
+
 
 $module_name = array();
 
@@ -46,256 +46,141 @@ $module_name[67] = "Heaps";
 $module_name[250] = "RecurrenceIntro";
 
 
-if($book_id != "VT") {
-  //Calculate the time spent in the module (Not VT)
-  calculate_time_module();
-}
-else {
-   
-   //To distinguish VT from other universities
-   //Code for VT (Relying on emails to distiguish users and books)
-   //Calculate the time spent in the module (VT Special Case)
-    calculate_time_module_VT();
-}
 
-//////////////////////////////////////////////////////////////////////////////////////
-function calculate_time_module(){
-  global $module_id;
-  global $book_id; 
-  global $start_date;
-  global $end_date;
-  global $db_server;
-  global $db_username;
-  global $db_pass;
-  global $db_name;
+$email_table = "";
+$email_column = "";
 
-
-  $query = "SELECT * 
-                  FROM  `opendsa_userbutton` 
-                  WHERE user_id IN 
-                 (Select user_id from `opendsa_userbook` where grade = 1 AND book_id = $book_id) 
-                  AND user_id NOT IN (Select user_id from `opendsa_userbook` where grade = 0)
-                  AND book_id = $book_id
-                  AND action_time BETWEEN '$start_date' AND '$end_date'
-                  ORDER BY user_id, action_time, id";
-  
-  $data = array();
-  if(@mysql_connect($db_server, $db_username, $db_pass)){
-  	  if(@mysql_select_db($db_name)){
-  	    if($query_run = mysql_query($query)){
-  		  while($query_result = mysql_fetch_assoc($query_run)){
-  			array_push($data, $query_result); 
-  		  } 
-  		}
-  	}
+  if($book_id == "VT"){
+    $email_table = "CS3114VTRoster";
+    $email_column = "user_email";
   }
-  
-  $result = array();
-
-  $first_record = null;
-
-  for($i = 0; $i < count($data); $i++){
-    if($data[$i]['module_id'] == $module_id && !isset($first_record)) {
-      $first_record = $data[$i];     
-    }
-    //The first Interaction is captured
-    if(isset($first_record)){
-      if($data[$i]["user_id"] != $first_record["user_id"]){
-        
-        //Return back one record and add it
-        array_push($result, $first_record, $data[$i - 1]);
-  
-        //Check if the new user's Interaction is with the module
-        if($data[$i]["module_id"] == $module_id){
-          $first_record = $data[$i];
-        }
-        else{
-          $first_record = null;
-        }
-      }
-      else if($data[$i]["user_id"] == $first_record["user_id"] && 
-        $data[$i]["module_id"] != $first_record["module_id"]){
-        //Save it (This is the first action outside the module)
-        array_push($result, $first_record, $data[$i]);
-        $first_record = null;
-      }
-      //If the last intearction is with the module
-      if($i == count($data) - 1){
-        array_push($result, $first_record, $data[$i]);    
-      }
-    }    
-  }
-  print_r($result);
-
-  calculate_baseline($result);
-}
-
- 
-//////////////////////////////////////////////////////////////////////////////////////////////
-
-function calculate_baseline($result){
-  //Calculating the baseline data points
-  global $module_name;
-  global $module_id;
-  global $book_id; 
-  global $start_date;
-  global $end_date;
-  global $db_server;
-  global $db_username;
-  global $db_pass;
-  global $db_name;
-
-  $maxDiff = 0;
-  $seconds = array();
-  for($i = 0;$i < count($result); $i += 2){
-    $dateDiff = strtotime($result[$i+1]['action_time']) - strtotime($result[$i]['action_time']);	  
-	  if($dateDiff > $maxDiff){
-	    $maxDiff = $dateDiff;
-	  }
-	  
-    if($i < count($result)-2){
-      if($result[$i+2]['user_id'] != $result[$i]['user_id']){
-        //Add maxDiff to the list
-        array_push($seconds, array($result[$i]['user_id'], $maxDiff, $module_name[$module_id], $book_id));
-        $maxDiff = 0;
-      }
-    }
-    else{
-      //Adding the last one
-      array_push($seconds, array($result[$i]['user_id'], $maxDiff, $module_name[$module_id], $book_id));
-	   }
+  else if ($book_id == "CNP"){
+    $email_table = "CNPRoster"; 
+    $email_column = "email";
   }
 
-  print_r($seconds);
-  
-  //Fill in csv file
-  $file = fopen("Output//Time IN $module_name[$module_id] In Book $book_id Analysis.csv",'w');
-  //Adding headers
-  fputcsv($file, array("User_ID", "Difference In Seconds" ,"Module Name","Book_ID"));
-  foreach($seconds as $line){
-    fputcsv($file, $line);
-  }
 
-  echo "Data Written to file Successfuly\n";
-}
-////////////////////////////////////////////////////////////////////////////////////////
-function calculate_time_module_VT($AAV_ID){
-  global $module_id;
-  global $start_date;
-  global $end_date;
-  global $db_server;
-  global $db_username;
-  global $db_pass;
-  global $db_name;
-
-
-  $query = "SELECT * 
+$query = "SELECT * 
                   FROM  `opendsa_userbutton` A INNER JOIN `auth_user` B ON
                   A.user_id = B.id 
                   WHERE email IN 
-                 (Select user_email from `CS3114VTRoster`) 
+                 (Select $email_column from $email_table) 
+                  AND module_id = $module_id
                   AND action_time BETWEEN '$start_date' AND '$end_date'
                   ORDER BY email, action_time, A.id";
-  
-  $data = array();
-  if(@mysql_connect($db_server, $db_username, $db_pass)){
-      if(@mysql_select_db($db_name)){
-        if($query_run = mysql_query($query)){
-        while($query_result = mysql_fetch_assoc($query_run)){
-        array_push($data, $query_result); 
-        } 
-      }
+
+$result = array();
+if(@mysql_connect($db_server, $db_username, $db_pass)){
+    if(@mysql_select_db($db_name)){
+      if($query_run = mysql_query($query)){
+      while($query_result = mysql_fetch_assoc($query_run)){
+      array_push($result, $query_result); 
+      } 
     }
   }
-  
-  $result = array();
-
-  $first_record = null;
-
-  for($i = 0; $i < count($data); $i++){
-    if($data[$i]['module_id'] == $module_id && !isset($first_record)) {
-      $first_record = $data[$i];
-      $start_session = true;      
-    }
-    //The first Interaction is captured
-    if(isset($first_record)){
-      if($data[$i]["email"] != $first_record["email"]){
-        
-        //Return back one record and add it
-        array_push($result, $first_record, $data[$i - 1]);
-  
-        //Check if the new user's Interaction is with the module
-        if($data[$i]["module_id"] == $module_id){
-          $first_record = $data[$i];
-        }
-        else{
-          $first_record = null;
-        }
-      }
-      else if($data[$i]["email"] == $first_record["email"] && 
-        $data[$i]["module_id"] != $first_record["module_id"]){
-        //Return back one record
-        array_push($result, $first_record, $data[$i]);
-        $first_record = null;
-      }
-      //If the last intearction is an AAV interction
-      if($i == count($data) - 1){
-        array_push($result, $first_record, $data[$i]);    
-      }
-    }    
-  }
-  //print_r($result);
-
-  calculate_baseline_VT($result);
 }
+
+//print_r($result);
+
+
+//Finding module sessions for each user and then pass this to calculate_time to get the max
+$sessions = array();
+$session_start = false;
+$current_user = null;
+$module_load = null;
+for($i = 0;$i < count($result); $i++){
+  if(($result[$i]['name'] == 'document-ready' || $result[$i]['name'] == 'window-focus')
+   && $session_start == false){
+    //Start of a session
+    $current_user = $result[$i]["email"];
+    $module_load = $result[$i];
+    $session_start = true;
+  }
+  else if ($result[$i]['name'] == 'document-ready' && $session_start == true){
+    //subsequent document-readys without matching window-unload
+    if($result[$i]["email"] != $current_user){
+      $current_user = $result[$i]["email"];
+      $module_load = $result[$i];
+    }
+  }
+  else if (($result[$i]['name'] == 'window-unload' || $result[$i]['name'] == 'window-blur') 
+    && $session_start == true){
+    //window-unload matching a document ready
+    if($result[$i]['email'] == $current_user){
+      array_push($sessions, $module_load);  
+      array_push($sessions, $result[$i]);  
+    }
+    $session_start = false; 
+  }
+}
+
+//print_r($sessions);
+
+calculate_time($sessions, $module_id, $book_id);
 
  
 //////////////////////////////////////////////////////////////////////////////////////////////
 
-function calculate_baseline_VT($result){
-  //Calculating the baseline data points
+function calculate_time($result, $module_id, $book_id){
   global $module_name;
-  global $module_id;
-  global $book_id; 
-  global $start_date;
-  global $end_date;
-  global $db_server;
-  global $db_username;
-  global $db_pass;
-  global $db_name;
+  global $time_out;
 
+  $number_of_visits = 0;
+
+  $average_time = 0;
+  $average_visits = 0;
+
+  //Calculating the baseline data points
   $maxDiff = 0;
   $seconds = array();
   for($i = 0;$i < count($result); $i += 2){
+ 
     $dateDiff = strtotime($result[$i+1]['action_time']) - strtotime($result[$i]['action_time']);
-    
-    if($dateDiff > $maxDiff){
+    $number_of_visits++;
+    //echo $dateDiff."     ";
+    if($dateDiff > $maxDiff && $dateDiff <= $time_out){
       $maxDiff = $dateDiff;
     }
     
     if($i < count($result)-2){
       if($result[$i+2]['email'] != $result[$i]['email']){
         //Add maxDiff to the list
-        array_push($seconds, array($result[$i]['email'], $maxDiff, $module_name[$module_id]));
+        array_push($seconds, array($result[$i]['email'],$maxDiff, $number_of_visits, $module_id, $book_id));
         $maxDiff = 0;
+        $number_of_visits = 0;
       }
     }
     else{
       //Adding the last one
-      array_push($seconds, array($result[$i]['email'], $maxDiff, $module_name[$module_id]));
+      array_push($seconds, array($result[$i]['email'],$maxDiff, $number_of_visits, $module_id, $book_id));
+    
      }
+    
   }
-
   print_r($seconds);
+
+
+  //Calculate the average time and average number of visits
+    $sum_time = 0;
+    $sum_visits = 0;
+    for ($i = 0; $i < count($seconds); $i++) { 
+      $sum_time += $seconds[$i][1];
+      $sum_visits += $seconds[$i][2];
+    } 
+
+    $average_time = $sum_time / count($seconds);   
+    $average_visits = $sum_visits / count($seconds);
   
   //Fill in csv file
-  $file = fopen("Output//Time IN $module_name[$module_id] In VTS16 Analysis.csv",'w');
+  $file = fopen("Output//Module $module_name[$module_id] In Book $book_id Analysis.csv",'w');
   //Adding headers
-  fputcsv($file, array("User_Email", "Difference In Seconds" ,"Module Name"));
+  fputcsv($file, array("User_Email","Difference in Seconds" , "Number of Visits", "Module Name","Book_ID"));
   foreach($seconds as $line){
     fputcsv($file, $line);
   }
 
+  //Add Averages
+  fputcsv($file, array("Average", $average_time, $average_visits));
+
   echo "Data Written to file Successfuly\n";
 }
-////////////////////////////////////////////////////////////////////////////////////////

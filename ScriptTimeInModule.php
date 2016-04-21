@@ -56,7 +56,6 @@ $query = "SELECT *
                 AND book_id = $book_id
                 AND module_id = $module_id
                 AND action_time BETWEEN '$start_date' AND '$end_date'
-                AND (name ='document-ready' OR name = 'window-unload')
                 ORDER BY user_id, action_time, id";
 //}
 $result = array();
