@@ -13,10 +13,6 @@ $module_id = $argv[1];
 $book_id = $argv[2];
 $start_date = $argv[3];
 $end_date = $argv[4];
-$time_out = $argv[5];    //A variable to control when we should time out in case a student leaves
-
-
-
 
 $module_name = array();
 
@@ -28,6 +24,7 @@ for($i=0;$i<280;$i++){
 $module_name[4] = "Insertionsort";
 $module_name[3] = "Bubblesort";
 $module_name[6] = "Selectionsort";
+$module_name[65] = "CostExchangeSorting";
 $module_name[96] = "Mergesort";
 $module_name[69] = "Quicksort";
 $module_name[70] = "Heapsort";
@@ -120,33 +117,30 @@ function calculate_time($result, $module_id, $book_id){
   $average_visits = 0;
 
   //Calculating the baseline data points
-  $maxDiff = 0;
+  $sumDiff = 0;
   $seconds = array();
   for($i = 0;$i < count($result); $i += 2){
  
     $dateDiff = strtotime($result[$i+1]['action_time']) - strtotime($result[$i]['action_time']);
     $number_of_visits++;
-	  //echo $dateDiff."     ";
-	  if($dateDiff > $maxDiff && $dateDiff <= $time_out){
-	    $maxDiff = $dateDiff;
-	  }
+	  $sumDiff += $dateDiff;
 	  
     if($i < count($result)-2){
       if($result[$i+2]['user_id'] != $result[$i]['user_id']){
         //Add maxDiff to the list
-        array_push($seconds, array($result[$i]['user_id'],$maxDiff, $number_of_visits, $module_id, $book_id));
-        $maxDiff = 0;
+        array_push($seconds, array($result[$i]['user_id'],$sumDiff, $number_of_visits, $module_id, $book_id));
+        $sumDiff = 0;
         $number_of_visits = 0;
       }
     }
     else{
       //Adding the last one
-      array_push($seconds, array($result[$i]['user_id'],$maxDiff, $number_of_visits, $module_id, $book_id));
+      array_push($seconds, array($result[$i]['user_id'],$sumDiff, $number_of_visits, $module_id, $book_id));
     
 	   }
     
   }
-  print_r($seconds);
+  //print_r($seconds);
 
 
   //Calculate the average time and average number of visits
@@ -163,7 +157,7 @@ function calculate_time($result, $module_id, $book_id){
   //Fill in csv file
   $file = fopen("Output//Module $module_name[$module_id] In Book $book_id Analysis.csv",'w');
   //Adding headers
-  fputcsv($file, array("User_ID","Difference in Seconds" , "Number of Visits", "Module Name","Book_ID"));
+  fputcsv($file, array("User_ID","Total Time" , "Number of Visits", "Module Name","Book_ID"));
   foreach($seconds as $line){
     fputcsv($file, $line);
   }

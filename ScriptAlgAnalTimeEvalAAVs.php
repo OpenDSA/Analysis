@@ -17,7 +17,6 @@ $module_id = $argv[1];
 $book_id = $argv[2];
 $start_date = $argv[3];
 $end_date = $argv[4];
-$time_out = $argv[5];    //A variable to control when we should time out in case a student leaves
 
 $module_name = array();
 
@@ -328,33 +327,30 @@ function calculate_baseline($result, $AAV_ID){
   global $db_pass;
   global $db_name;
   global $total_time;
-  global $time_out;
 
-  $maxDiff = 0;
+  $sumDiff = 0;
   $number_of_visits = 0;
   $seconds = array();
   for($i = 0;$i < count($result); $i += 2){
     $dateDiff = strtotime($result[$i+1]['action_time']) - strtotime($result[$i]['action_time']);
     $number_of_visits++;
-    if($dateDiff > $maxDiff && $dateDiff <= $time_out){
-      $maxDiff = $dateDiff;
-    }
+    $sumDiff += $dateDiff;
     
     if($i < count($result)-2){
       if($result[$i+2]['email'] != $result[$i]['email']){
         //Add maxDiff to the list
-        array_push($seconds, array($result[$i]['email'], $AAV_ID, $maxDiff, $number_of_visits, $module_name[$module_id]));
-        $maxDiff = 0;
+        array_push($seconds, array($result[$i]['email'], $AAV_ID, $sumDiff, $number_of_visits, $module_name[$module_id]));
+        $sumDiff = 0;
         $number_of_visits = 0;
       }
     }
     else{
       //Adding the last one
-      array_push($seconds, array($result[$i]['email'], $AAV_ID, $maxDiff, $number_of_visits, $module_name[$module_id]));
+      array_push($seconds, array($result[$i]['email'], $AAV_ID, $sumDiff, $number_of_visits, $module_name[$module_id]));
      }
   }
 
-  print_r($seconds);
+  //print_r($seconds);
 
   //Add the seconds array to the total array
   for($i = 0; $i < count($seconds); $i++){
@@ -364,7 +360,7 @@ function calculate_baseline($result, $AAV_ID){
   //Fill in csv file
   $file = fopen("Output//AAV $AAV_ID IN $module_name[$module_id] In $book_id AAV Analysis.csv",'w');
   //Adding headers
-  fputcsv($file, array("User_Email", "AAV_ID", "Difference in Seconds" , "Number of Visits", "Module Name"));
+  fputcsv($file, array("User_Email", "AAV_ID", "Total Time" , "Number of Visits", "Module Name"));
   foreach($seconds as $line){
     fputcsv($file, $line);
   }
@@ -405,7 +401,7 @@ function dumpTotal($total_time){
   //Fill in csv file
   $file = fopen("Output//$module_name[$module_id] In Book $book_id AAV Analysis.csv",'w');
   //Adding headers
-  fputcsv($file, array("User_Email", "Difference In Seconds" , "Number of Visits","Module Name"));
+  fputcsv($file, array("User_Email", "Total Time" , "Number of Visits","Module Name"));
   foreach($total_by_user as $line){
     fputcsv($file, $line);
   }
