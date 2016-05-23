@@ -33,6 +33,7 @@ $module_name[69] = "Quicksort";
 $module_name[70] = "Heapsort";
 $module_name[99] = "Radixsort";
 $module_name[77] = "Summations";
+$module_name[65] = "CostExchangeSort";
 $module_name[78] = "Proofs";
 $module_name[50] = "AnalPrelim";
 $module_name[52] = "AnalCases";
