@@ -10,8 +10,8 @@
 
 // `odsa_S14`.`opendsa_userbutton`
 $db_server = 'localhost';
-$db_username = 'mfseddik';
-$db_pass = 'MFS_a1s2d3f4g5h6';
+$db_username = $argv[1];
+$db_pass = $argv[2];
 $db_name = 'odsa_S14';
 
 //Get those exercises in which the model answer box was opened

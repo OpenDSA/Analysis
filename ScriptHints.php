@@ -10,8 +10,8 @@
 
 // `odsa_S14`.`opendsa_userbutton`
 $db_server = 'localhost';
-$db_username = 'mfseddik';
-$db_pass = 'MFS_a1s2d3f4g5h6';
+$db_username = $argv[4];
+$db_pass = $argv[5];
 $db_name = 'odsa_S14';
 
 $book_id = $argv[1];
