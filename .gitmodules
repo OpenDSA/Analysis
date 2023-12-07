@@ -1,0 +1,3 @@
+[submodule "openDSAVisualizer"]
+	path = openDSAVisualizer
+	url = https://github.com/egol2/openDSAVisualizer.git
